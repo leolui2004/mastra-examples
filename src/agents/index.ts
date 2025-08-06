@@ -6,6 +6,8 @@ import { catExpertExample } from "./examples/cat-expert";
 import { humanInLoopExample } from "./examples/human-in-loop";
 import { hierarchicalMultiAgentExample } from "./examples/hierarchical-multi-agent";
 import { arrayWorkflowExample } from "./examples/array-workflow";
+import { toolAgentExample } from "./examples/agent-tool";
+import { conditionalBranchWorkflowExample } from "./examples/conditional-branch-workflow";
 
 // Example Registry
 export interface ExampleConfig {
@@ -31,6 +33,8 @@ export const examples: ExampleConfig[] = [
   humanInLoopExample,
   hierarchicalMultiAgentExample,
   arrayWorkflowExample,
+  toolAgentExample,
+  conditionalBranchWorkflowExample,
 ];
 
 export const getExample = (id: string): ExampleConfig | undefined => {

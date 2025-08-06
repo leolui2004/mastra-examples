@@ -25,25 +25,12 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## 📦 Available Examples
 
-### 1. Cat Expert Agent
-- **Type**: Chat Interface
-- **Description**: An AI agent that provides cat facts and answers cat-related questions
-- **Features**: Uses OpenAI GPT-4o-mini with a tool to fetch real cat facts
-
-### 2. Human-in-the-Loop Workflow  
-- **Type**: Workflow Interface
-- **Description**: A workflow demonstrating human intervention with confirmation steps
-- **Features**: Two-step process with user confirmation and state management
-
-### 3. Hierarchical Multi-Agent System
-- **Type**: Chat Interface
-- **Description**: A complex multi-agent system with publisher, copywriter, and editor agents working together
-- **Features**: Demonstrates agent collaboration where a publisher coordinates copywriter and editor agents to create blog posts
-
-### 4. Array Processing Workflow
-- **Type**: Workflow Interface
-- **Description**: A workflow demonstrating array processing with foreach operations
-- **Features**: Shows how to process arrays of data through workflow steps with transformation logic
+1. Cat Expert Agent
+2. Human-in-the-Loop Workflow  
+3. Hierarchical Multi-Agent System
+4. Array Processing Workflow
+5. Tool with Agent
+6. Conditional Branch Workflow
 
 ## 🐳 Docker Support
 
@@ -62,7 +49,7 @@ docker-compose --profile dev up --build
 ```
 src/
 ├── app/
-│   ├── api/run/[exampleId]/route.ts    # API endpoints
+│   ├── api/run/[exampleId]/route.ts     # API endpoints
 │   ├── examples/[exampleId]/page.tsx    # Dynamic example pages
 │   ├── examples/layout.tsx              # Examples layout with sidebar
 │   ├── layout.tsx                       # Root layout
@@ -70,10 +57,7 @@ src/
 ├── agents/
 │   ├── index.ts                         # Agent & workflow registry
 │   └── examples/                        # Individual example implementations
-│       ├── cat-expert.ts                # Cat Expert Agent
-│       ├── human-in-loop.ts             # Human-in-Loop Workflow
-│       ├── hierarchical-multi-agent.ts  # Multi-Agent System
-│       └── array-workflow.ts            # Array Processing Workflow
+│       ├── ...                          # Agent examples
 └── components/
     ├── ui/card.tsx                      # UI components
     └── examples/

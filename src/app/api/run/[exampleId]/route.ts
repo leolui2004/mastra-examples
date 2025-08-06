@@ -75,14 +75,6 @@ export async function POST(
           );
         }
       } else {
-        // Start new workflow
-        if (typeof value !== 'number') {
-          return NextResponse.json(
-            { error: 'Value must be a number' },
-            { status: 400 }
-          );
-        }
-
         try {
           // Simulate workflow execution (simplified for demo)
           // Step 1: Pass value through (automatic)

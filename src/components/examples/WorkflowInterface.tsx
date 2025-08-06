@@ -22,21 +22,88 @@ export function WorkflowInterface({ exampleId }: WorkflowInterfaceProps) {
   const [waitingForConfirmation, setWaitingForConfirmation] = useState(false);
   const [result, setResult] = useState<any>(null);
 
+  // Define workflow-specific configurations
+  const getWorkflowConfig = (workflowId: string) => {
+    switch (workflowId) {
+      case 'human-in-loop':
+        return {
+          steps: [
+            { id: 'step-1', status: 'pending' as const, name: 'Pass value through' },
+            { id: 'step-2', status: 'pending' as const, name: 'Wait for confirmation' },
+          ],
+          requiresConfirmation: true,
+          inputType: 'number' as const
+        };
+      case 'conditional-branch-workflow':
+        return {
+          steps: [
+            { id: 'branch-evaluation', status: 'pending' as const, name: 'Evaluate condition' },
+            { id: 'branch-execution', status: 'pending' as const, name: 'Execute selected branch' },
+          ],
+          requiresConfirmation: false,
+          inputType: 'number' as const
+        };
+      case 'array-workflow':
+        return {
+          steps: [
+            { id: 'foreach-step', status: 'pending' as const, name: 'Process each array item' },
+            { id: 'collect-step', status: 'pending' as const, name: 'Collect results' },
+          ],
+          requiresConfirmation: false,
+          inputType: 'array' as const
+        };
+      default:
+        return {
+          steps: [
+            { id: 'workflow-execution', status: 'pending' as const, name: 'Execute workflow' },
+          ],
+          requiresConfirmation: false,
+          inputType: 'number' as const
+        };
+    }
+  };
+
   const startWorkflow = async () => {
     if (!input.trim()) return;
 
-    const inputValue = parseInt(input);
-    if (isNaN(inputValue)) {
-      alert('Please enter a valid number');
-      return;
+    const config = getWorkflowConfig(exampleId);
+    let processedInput: any;
+    let requestBody: any;
+
+    // Process input based on workflow type
+    if (config.inputType === 'array') {
+      try {
+        // Try to parse as JSON array first
+        const trimmedInput = input.trim();
+        if (trimmedInput.startsWith('[') && trimmedInput.endsWith(']')) {
+          processedInput = JSON.parse(trimmedInput);
+        } else {
+          // Split by comma and clean up
+          processedInput = trimmedInput.split(',').map(item => item.trim()).filter(item => item.length > 0);
+        }
+        
+        if (!Array.isArray(processedInput) || processedInput.length === 0) {
+          alert('Please enter a valid array (e.g., "apple, banana, cherry" or ["apple", "banana", "cherry"])');
+          return;
+        }
+        requestBody = processedInput; // Array workflows expect the array directly
+      } catch (error) {
+        alert('Please enter a valid array (e.g., "apple, banana, cherry" or ["apple", "banana", "cherry"])');
+        return;
+      }
+    } else {
+      // Number input
+      processedInput = parseInt(input);
+      if (isNaN(processedInput)) {
+        alert('Please enter a valid number');
+        return;
+      }
+      requestBody = { value: processedInput }; // Number workflows expect { value: number }
     }
 
     setIsRunning(true);
     setResult(null);
-    setSteps([
-      { id: 'step-1', status: 'running', name: 'Pass value through' },
-      { id: 'step-2', status: 'pending', name: 'Wait for confirmation' },
-    ]);
+    setSteps(config.steps.map(step => ({ ...step, status: 'running' })));
 
     try {
       const response = await fetch(`/api/run/${exampleId}`, {
@@ -44,7 +111,7 @@ export function WorkflowInterface({ exampleId }: WorkflowInterfaceProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ value: inputValue }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -54,17 +121,42 @@ export function WorkflowInterface({ exampleId }: WorkflowInterfaceProps) {
       const data = await response.json();
       setWorkflowId(data.workflowId);
 
-      // Update steps
-      setSteps(prev => prev.map(step => 
-        step.id === 'step-1' 
-          ? { ...step, status: 'completed', result: { value: inputValue } }
-          : step.id === 'step-2'
-          ? { ...step, status: 'waiting' }
-          : step
-      ));
-
-      setWaitingForConfirmation(true);
-      setIsRunning(false);
+      if (config.requiresConfirmation) {
+        // Human-in-loop workflow behavior
+        setSteps(prev => prev.map(step => 
+          step.id === 'step-1' 
+            ? { ...step, status: 'completed', result: { value: processedInput } }
+            : step.id === 'step-2'
+            ? { ...step, status: 'waiting' }
+            : step
+        ));
+        setWaitingForConfirmation(true);
+        setIsRunning(false);
+      } else {
+        // Other workflows
+        if (exampleId === 'conditional-branch-workflow') {
+          const branchResult = processedInput <= 10 ? 0 : 20;
+          const conditionText = processedInput <= 10 ? 'value ≤ 10' : 'value > 10';
+          setSteps([
+            { id: 'branch-evaluation', status: 'completed', name: 'Evaluate condition', result: { condition: conditionText } },
+            { id: 'branch-execution', status: 'completed', name: 'Execute selected branch', result: { value: branchResult } },
+          ]);
+          setResult({ value: branchResult });
+        } else if (exampleId === 'array-workflow') {
+          // Array workflow specific handling
+          const processedItems = processedInput.map((item: string) => `${item} mapStep`);
+          setSteps([
+            { id: 'foreach-step', status: 'completed', name: 'Process each array item', result: { processed: processedItems } },
+            { id: 'collect-step', status: 'completed', name: 'Collect results', result: data },
+          ]);
+          setResult(data);
+        } else {
+          // Generic workflow completion
+          setSteps(prev => prev.map(step => ({ ...step, status: 'completed', result: data })));
+          setResult(data);
+        }
+        setIsRunning(false);
+      }
     } catch (error) {
       console.error('Error:', error);
       setSteps(prev => prev.map(step => 
@@ -151,28 +243,41 @@ export function WorkflowInterface({ exampleId }: WorkflowInterfaceProps) {
       {/* Input */}
       <div className="space-y-4">
         <div>
-          <label htmlFor="workflow-input" className="block text-sm font-medium text-gray-700 mb-2">
-            Enter a number:
-          </label>
-          <div className="flex space-x-2">
-            <input
-              id="workflow-input"
-              type="number"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Enter a number"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={isRunning || waitingForConfirmation}
-            />
-            <button
-              onClick={startWorkflow}
-              disabled={isRunning || waitingForConfirmation || !input.trim()}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-            >
-              <Play className="w-4 h-4" />
-              <span>Start Workflow</span>
-            </button>
-          </div>
+          {(() => {
+            const config = getWorkflowConfig(exampleId);
+            const isArrayInput = config.inputType === 'array';
+            return (
+              <>
+                <label htmlFor="workflow-input" className="block text-sm font-medium text-gray-700 mb-2">
+                  {isArrayInput ? 'Enter array items:' : 'Enter a number:'}
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    id="workflow-input"
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder={isArrayInput ? 'apple, banana, cherry' : 'Enter a number'}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isRunning || waitingForConfirmation}
+                  />
+                  <button
+                    onClick={startWorkflow}
+                    disabled={isRunning || waitingForConfirmation || !input.trim()}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    <span>Start Workflow</span>
+                  </button>
+                </div>
+                {isArrayInput && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Enter items separated by commas, or use JSON format: ["item1", "item2"]
+                  </p>
+                )}
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -203,8 +308,8 @@ export function WorkflowInterface({ exampleId }: WorkflowInterfaceProps) {
         </div>
       )}
 
-      {/* Confirmation */}
-      {waitingForConfirmation && (
+      {/* Confirmation - only show for workflows that require it */}
+      {waitingForConfirmation && exampleId === 'human-in-loop' && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <h4 className="text-lg font-semibold text-gray-900 mb-4">
             Confirmation Required
