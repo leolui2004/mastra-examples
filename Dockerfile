@@ -1,59 +1,64 @@
-# Use the official Node.js runtime as the base image
+# Stage 1: Base image with necessary compatibility libraries
 FROM node:18-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+# Install libc6-compat for compatibility with native modules
 RUN apk add --no-cache libc6-compat
-WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Stage 2: Install all dependencies (including devDependencies) for the build
+FROM base AS deps
+WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
-# Rebuild the source code only when needed
+# Stage 3: Build the Next.js application
 FROM base AS builder
 WORKDIR /app
+# Copy dependencies and source code
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
+# Disable telemetry during build if desired
 # ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN npm run build
 
-# Production image, copy all the files and run next
+# --- KEY CHANGE ---
+# Copy the package-lock.json to the standalone directory.
+# This is required for npm ci to work in the final stage.
+COPY package-lock.json ./.next/standalone/
+
+
+# Stage 4: Production image
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
-# Uncomment the following line in case you want to disable telemetry during runtime.
+# Disable telemetry during runtime if desired
 # ENV NEXT_TELEMETRY_DISABLED 1
 
+# Create a non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Copy the standalone output from the builder stage
+# This now includes the package-lock.json
+COPY --from=builder /app/.next/standalone ./
+
+# Run npm ci to install production dependencies based on the lock file
+RUN npm ci --omit=dev
+
+# Copy public and static assets
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/static ./.next/static
 
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+# Set correct ownership for all files
+RUN chown -R nextjs:nodejs .
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
+# Switch to the non-root user
 USER nextjs
 
 EXPOSE 3000
-
 ENV PORT 3000
-# set hostname to localhost
 ENV HOSTNAME "0.0.0.0"
 
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/next-config-js/output
+# Start the application using the standalone server file
 CMD ["node", "server.js"]

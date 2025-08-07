@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getExample } from '@/agents';
+import { randomUUID } from 'crypto';
 
 // In-memory storage for workflow states (simplified for demo purposes)
 const workflowStates = new Map<string, { value: number; step: number }>();
+
+// In-memory storage for memory agent sessions (simplified for demo purposes)
+const memorySessions = new Map<string, { threadId: string; resourceId: string }>();
 
 export async function POST(
   request: NextRequest,
@@ -23,7 +27,7 @@ export async function POST(
 
     if (example.type === 'chat' && example.agent) {
       // Handle chat agent
-      const { message } = body;
+      const { message, sessionId } = body;
       
       if (!message) {
         return NextResponse.json(
@@ -32,11 +36,62 @@ export async function POST(
         );
       }
 
-      const result = await example.agent.generate(message);
-      
-      return NextResponse.json({
-        response: result.text
-      });
+      // Check if this is a memory agent that requires session management
+      if (exampleId === 'memory-agent') {
+        // Get or create session for memory agent
+        const actualSessionId = sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        let session = memorySessions.get(actualSessionId);
+        
+        if (!session) {
+          // Create new session
+          session = {
+            threadId: randomUUID(),
+            resourceId: actualSessionId, // Use session ID as resource ID for simplicity
+          };
+          memorySessions.set(actualSessionId, session);
+        }
+
+        try {
+          // Handle memory agent with proper streaming and session management
+          const result = await example.agent.stream(message, {
+            threadId: session.threadId,
+            resourceId: session.resourceId,
+            memoryOptions: {
+              lastMessages: 10, // Get last 10 messages
+              semanticRecall: {
+                topK: 3, // Get top 3 most relevant messages
+                messageRange: 2, // Include context around each match
+              },
+            },
+          });
+
+          // Collect the streamed response
+          let responseText = '';
+          for await (const chunk of result.textStream) {
+            responseText += chunk;
+          }
+
+          return NextResponse.json({
+            response: responseText,
+            sessionId: actualSessionId,
+          });
+        } catch (error) {
+          console.error('Memory agent error:', error);
+          // Fallback to regular generation if memory fails
+          const fallbackResult = await example.agent.generate(message);
+          return NextResponse.json({
+            response: fallbackResult.text,
+            sessionId: actualSessionId,
+          });
+        }
+      } else {
+        // Handle regular chat agents
+        const result = await example.agent.generate(message);
+        
+        return NextResponse.json({
+          response: result.text
+        });
+      }
 
     } else if (example.type === 'workflow' && example.workflow) {
       // Handle workflow

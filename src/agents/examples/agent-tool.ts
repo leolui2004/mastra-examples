@@ -53,10 +53,14 @@ const getWeather = async (location: string) => {
       geocodingData = await geocodingResponse.json();
     } catch (error) {
       console.error("Error fetching geocoding data:", error);
-      if (error.name === 'AbortError') {
-        throw new Error(`Failed to fetch geocoding data: The request timed out after ${timeout / 1000} seconds.`);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error(`Failed to fetch geocoding data: The request timed out after ${timeout / 1000} seconds.`);
+        }
+        throw new Error(`Failed to fetch geocoding data. Reason: ${error.message}`);
       }
-      throw new Error(`Failed to fetch geocoding data. Reason: ${error.message}`);
+      // Handle cases where a non-Error was thrown
+      throw new Error('An unknown error occurred during geocoding.');
     } finally {
       // IMPORTANT: Clear the timeout to prevent it from running unnecessarily
       clearTimeout(geocodingTimeoutId);
@@ -82,10 +86,14 @@ const getWeather = async (location: string) => {
       data = await response.json();
     } catch (error) {
       console.error("Error fetching weather data:", error);
-       if (error.name === 'AbortError') {
-        throw new Error(`Failed to fetch weather data: The request timed out after ${timeout / 1000} seconds.`);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error(`Failed to fetch weather data: The request timed out after ${timeout / 1000} seconds.`);
+        }
+        throw new Error(`Failed to fetch weather data. Reason: ${error.message}`);
       }
-      throw new Error(`Failed to fetch weather data. Reason: ${error.message}`);
+      // Handle cases where a non-Error was thrown
+      throw new Error('An unknown error occurred during weather data fetching.');
     } finally {
       // IMPORTANT: Clear the timeout
       clearTimeout(weatherTimeoutId);

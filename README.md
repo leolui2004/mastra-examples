@@ -2,7 +2,19 @@
 
 A Next.js web application showcasing various Mastra agents and workflows through an interactive interface.
 
-## 🚀 Quick Start
+## 🐳 Docker Environment
+
+### Production
+```bash
+docker-compose up --build
+```
+
+### Development
+```bash
+docker-compose --env-file .env.local --profile dev up --build
+```
+
+## 🚀 Local Environment
 
 1. **Install dependencies:**
 ```bash
@@ -23,6 +35,8 @@ npm run dev
 4. **Open your browser:**
 Navigate to [http://localhost:3000](http://localhost:3000)
 
+**You would also need to run a libSQL server if you want to try the memory function**
+
 ## 📦 Available Examples
 
 1. Cat Expert Agent
@@ -31,18 +45,6 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 4. Array Processing Workflow
 5. Tool with Agent
 6. Conditional Branch Workflow
-
-## 🐳 Docker Support
-
-### Production
-```bash
-docker-compose up --build
-```
-
-### Development
-```bash
-docker-compose --profile dev up --build
-```
 
 ## 🏗️ Project Structure
 
@@ -115,3 +117,10 @@ For detailed setup instructions, see [SETUP.md](./SETUP.md).
 - **AI**: Mastra Core + OpenAI
 - **Language**: TypeScript
 - **Container**: Docker
+
+
+## Special Thanks
+
+Using Next.js with Mastra in some of the Next.js version will cause an error, the way to solve the error can be reference as below:
+
+https://github.com/ai-peace/akira/blob/9f7aede5fecf4c90377a5edc11897ee20124c7de/mastra-nextjs-integration-report.md?plain=1#L8

@@ -18,6 +18,7 @@ export function ChatInterface({ exampleId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,12 +36,19 @@ export function ChatInterface({ exampleId }: ChatInterfaceProps) {
     setIsLoading(true);
 
     try {
+      const requestBody: any = { message: input.trim() };
+      
+      // Include sessionId for memory agents
+      if (exampleId === 'memory-agent' && sessionId) {
+        requestBody.sessionId = sessionId;
+      }
+
       const response = await fetch(`/api/run/${exampleId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: input.trim() }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -48,6 +56,11 @@ export function ChatInterface({ exampleId }: ChatInterfaceProps) {
       }
 
       const data = await response.json();
+
+      // Store sessionId for memory agents
+      if (exampleId === 'memory-agent' && data.sessionId) {
+        setSessionId(data.sessionId);
+      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),

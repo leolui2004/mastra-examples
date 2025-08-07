@@ -8,6 +8,7 @@ import { hierarchicalMultiAgentExample } from "./examples/hierarchical-multi-age
 import { arrayWorkflowExample } from "./examples/array-workflow";
 import { toolAgentExample } from "./examples/agent-tool";
 import { conditionalBranchWorkflowExample } from "./examples/conditional-branch-workflow";
+import { memoryAgentExample } from "./examples/memory-agent";
 
 // Example Registry
 export interface ExampleConfig {
@@ -35,6 +36,7 @@ export const examples: ExampleConfig[] = [
   arrayWorkflowExample,
   toolAgentExample,
   conditionalBranchWorkflowExample,
+  memoryAgentExample,
 ];
 
 export const getExample = (id: string): ExampleConfig | undefined => {

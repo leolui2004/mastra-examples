@@ -1,0 +1,11 @@
+services:
+
+  libsql-server:
+    image: ghcr.io/tursodatabase/libsql-server:latest
+    environment:
+      # This token must match DATABASE_AUTH_TOKEN used by your apps
+      - LIBSQL_SERVER_AUTH_TOKEN=${DATABASE_AUTH_TOKEN}
+    ports:
+      # Expose the database on port 8080 of your host machine for debugging/tools
+      - "8080:8080"
+    restart: unless-stopped

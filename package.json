@@ -3,25 +3,29 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS='--network-family-autoselection-attempt-timeout=500' next dev",
-    "build": "cross-env NODE_OPTIONS='--network-family-autoselection-attempt-timeout=500' next build",
-    "start": "cross-env NODE_OPTIONS='--network-family-autoselection-attempt-timeout=500' next start",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.66",
-    "@mastra/core": "^0.12.1",
+    "@mastra/core": "^0.13.1",
+    "@mastra/libsql": "^0.13.1",
+    "@mastra/memory": "^0.12.1",
     "lucide-react": "^0.263.1",
     "next": "14.2.5",
     "node-fetch": "^3.3.2",
     "react": "^18",
     "react-dom": "^18",
+    "uuid": "^11.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.14",
     "cross-env": "^10.0.0",
     "eslint": "^8",
