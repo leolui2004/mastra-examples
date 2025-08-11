@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getExample } from '@/agents';
 import { ChatInterface } from '@/components/examples/ChatInterface';
 import { WorkflowInterface } from '@/components/examples/WorkflowInterface';
+import { EvalInterface } from '@/components/examples/EvalInterface';
 
 interface ExamplePageProps {
   params: {
@@ -47,6 +48,9 @@ export default function ExamplePage({ params }: ExamplePageProps) {
         )}
         {exampleData.type === 'workflow' && (
           <WorkflowInterface exampleId={exampleData.id} />
+        )}
+        {exampleData.type === 'eval' && (
+          <EvalInterface exampleId={exampleData.id} />
         )}
       </div>
     </div>

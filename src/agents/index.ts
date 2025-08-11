@@ -9,13 +9,15 @@ import { arrayWorkflowExample } from "./examples/array-workflow";
 import { toolAgentExample } from "./examples/agent-tool";
 import { conditionalBranchWorkflowExample } from "./examples/conditional-branch-workflow";
 import { memoryAgentExample } from "./examples/memory-agent";
+import { answerRelevancyExample } from "./examples/answer-relevancy";
+import { biasExample } from "./examples/bias-evaluation";
 
 // Example Registry
 export interface ExampleConfig {
   id: string;
   title: string;
   description: string;
-  type: 'chat' | 'workflow';
+  type: 'chat' | 'workflow' | 'eval';
   agent?: Agent;
   workflow?: any;
   inputSchema?: z.ZodSchema;
@@ -26,7 +28,7 @@ export interface ExampleMetadata {
   id: string;
   title: string;
   description: string;
-  type: 'chat' | 'workflow';
+  type: 'chat' | 'workflow' | 'eval';
 }
 
 export const examples: ExampleConfig[] = [
@@ -37,6 +39,8 @@ export const examples: ExampleConfig[] = [
   toolAgentExample,
   conditionalBranchWorkflowExample,
   memoryAgentExample,
+  answerRelevancyExample,
+  biasExample,
 ];
 
 export const getExample = (id: string): ExampleConfig | undefined => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Send } from 'lucide-react';
 
 interface Message {
@@ -19,6 +19,18 @@ export function ChatInterface({ exampleId }: ChatInterfaceProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+
+  // Persist memory-agent session across reloads so the same threadId is reused
+  useEffect(() => {
+    if (exampleId === 'memory-agent') {
+      try {
+        const stored = localStorage.getItem('mastra_examples_session_memory-agent');
+        if (stored) {
+          setSessionId(stored);
+        }
+      } catch {}
+    }
+  }, [exampleId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +72,9 @@ export function ChatInterface({ exampleId }: ChatInterfaceProps) {
       // Store sessionId for memory agents
       if (exampleId === 'memory-agent' && data.sessionId) {
         setSessionId(data.sessionId);
+        try {
+          localStorage.setItem('mastra_examples_session_memory-agent', data.sessionId);
+        } catch {}
       }
 
       const assistantMessage: Message = {

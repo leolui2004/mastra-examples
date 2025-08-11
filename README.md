@@ -45,6 +45,9 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 4. Array Processing Workflow
 5. Tool with Agent
 6. Conditional Branch Workflow
+7. Memory Agent
+8. Answer Relevancy Evals
+9. Bias Evaluation Evals
 
 ## 🏗️ Project Structure
 
